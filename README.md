@@ -30,7 +30,8 @@ code-game/
 ├── cases/              # The 5 case briefings (PDF)
 ├── data/
 │   └── house_data1000.csv
-├── index.html          # Interactive code-entry interface
+|   └── mtcars.csv
+├── escape-room.html          # Interactive code-entry interface
 └── README.md
 ```
 
@@ -53,7 +54,7 @@ Python or R for the analysis, vanilla JavaScript for the interface, Discord for 
 ## 🔁 Run it yourself
 
 1. Share the case PDFs and the dataset with your teams
-2. Host `index.html` (GitHub Pages works)
+2. Host `escape-room.html` (GitHub Pages works)
 3. Set a timer and let them play
 
 ## 👤 Author

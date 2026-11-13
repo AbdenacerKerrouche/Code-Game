@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Space — Operation Ironclad</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .particle {
+            position: fixed;
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            animation: float 18s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(40px); opacity: 0; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 50px 60px;
+            border-radius: 24px;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.5);
+            text-align: center;
+            max-width: 700px;
+            width: 92%;
+            position: relative;
+            animation: slideIn 0.8s ease-out;
+            z-index: 1;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-40px); opacity: 0; }
+            to   { transform: translateY(0);     opacity: 1; }
+        }
+
+        .logo {
+            font-size: 0.85em;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: #302b63;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            opacity: 0.7;
+        }
+
+        h1 {
+            color: #302b63;
+            margin-bottom: 8px;
+            font-size: 2.2em;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            animation: glow 2.5s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%,100% { text-shadow: 0 0 8px rgba(48,43,99,0.2); }
+            50%      { text-shadow: 0 0 22px rgba(48,43,99,0.55); }
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 42px;
+            font-size: 0.95em;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Case cards ── */
+        .cases-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-bottom: 38px;
+        }
+
+        .case-card {
+            background: #f7f8fc;
+            border: 2px solid #e0e4f0;
+            border-radius: 14px;
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            animation: fadeInUp 0.5s ease-out backwards;
+        }
+
+        .case-card:nth-child(1) { animation-delay: 0.08s; }
+        .case-card:nth-child(2) { animation-delay: 0.16s; }
+        .case-card:nth-child(3) { animation-delay: 0.24s; }
+        .case-card:nth-child(4) { animation-delay: 0.32s; }
+        .case-card:nth-child(5) { animation-delay: 0.40s; }
+
+        @keyframes fadeInUp {
+            from { transform: translateY(18px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+
+        .case-card.solved {
+            border-color: #4CAF50;
+            background: #f0fbf0;
+            box-shadow: 0 0 12px rgba(76,175,80,0.2);
+        }
+
+        .case-card.error-state {
+            border-color: #f44336;
+            background: #fff5f5;
+            animation: shake 0.45s ease;
+        }
+
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25%      { transform: translateX(-8px); }
+            75%      { transform: translateX(8px); }
+        }
+
+        .case-info { text-align: left; flex: 1; }
+
+        .case-label {
+            font-size: 0.72em;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #aaa;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .case-title {
+            font-size: 1em;
+            font-weight: 700;
+            color: #302b63;
+        }
+
+        .case-hint {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        /* ── Input boxes ── */
+        .input-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .digit-input {
+            width: 48px;
+            height: 60px;
+            font-size: 26px;
+            text-align: center;
+            border: 2.5px solid #ddd;
+            border-radius: 10px;
+            transition: all 0.25s ease;
+            font-weight: 700;
+            color: #302b63;
+            background: white;
+            caret-color: #302b63;
+        }
+
+        .digit-input:focus {
+            outline: none;
+            border-color: #302b63;
+            box-shadow: 0 0 12px rgba(48,43,99,0.25);
+            transform: scale(1.06);
+        }
+
+        .digit-input.correct {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+            color: #2e7d32;
+            animation: pulseGreen 0.45s ease;
+        }
+
+        .digit-input.wrong {
+            border-color: #f44336;
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        @keyframes pulseGreen {
+            0%,100% { transform: scale(1); }
+            50%      { transform: scale(1.1); }
+        }
+
+        .check-icon {
+            font-size: 1.5em;
+            width: 32px;
+            text-align: center;
+        }
+
+        /* ── Buttons ── */
+        .btn-row {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 4px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #302b63 0%, #24243e 100%);
+            color: white;
+            border: none;
+            padding: 16px 44px;
+            font-size: 1em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            box-shadow: 0 5px 18px rgba(48,43,99,0.35);
+        }
+
+        .btn:hover  { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(48,43,99,0.45); }
+        .btn:active { transform: translateY(0); }
+
+        .btn.reset {
+            background: linear-gradient(135deg, #757575 0%, #616161 100%);
+            box-shadow: 0 5px 18px rgba(0,0,0,0.2);
+        }
+
+        .status-msg {
+            margin-top: 22px;
+            font-size: 1.05em;
+            font-weight: 700;
+            min-height: 26px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        .status-msg.success { color: #4CAF50; }
+        .status-msg.error   { color: #f44336; }
+
+        /* ── Success Overlay ── */
+        .success-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: overlayFadeIn 0.6s ease;
+            padding: 30px;
+        }
+
+        @keyframes overlayFadeIn { from { opacity:0; } to { opacity:1; } }
+
+        .success-content {
+            text-align: center;
+            color: white;
+            max-width: 680px;
+            animation: successPop 0.9s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        @keyframes successPop {
+            0%   { transform: scale(0.4); opacity: 0; }
+            60%  { transform: scale(1.05); }
+            100% { transform: scale(1);   opacity: 1; }
+        }
+
+        .success-emoji {
+            font-size: 4em;
+            margin-bottom: 16px;
+            display: block;
+            animation: bounce 1.5s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); }
+            50%      { transform: translateY(-12px); }
+        }
+
+        .success-club {
+            font-size: 0.85em;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.55);
+            margin-bottom: 12px;
+        }
+
+        .success-headline {
+            font-size: 2.6em;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 28px;
+            line-height: 1.2;
+            text-shadow: 0 0 30px rgba(255,255,255,0.2);
+        }
+
+        .quote-box {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 18px;
+            padding: 32px 40px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 28px;
+        }
+
+        .quote-text {
+            font-size: 1.45em;
+            line-height: 1.7;
+            font-style: italic;
+            color: rgba(255,255,255,0.95);
+            margin-bottom: 16px;
+        }
+
+        .quote-author {
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 1px;
+        }
+
+        .success-sub {
+            font-size: 1em;
+            color: rgba(255,255,255,0.65);
+            line-height: 1.6;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            animation: confettiFall 3.5s linear forwards;
+            pointer-events: none;
+        }
+
+        @keyframes confettiFall {
+            to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        for (let i = 0; i < 35; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.top  = Math.random() * 100 + '%';
+            p.style.animationDelay    = Math.random() * 18 + 's';
+            p.style.animationDuration = (Math.random() * 10 + 12) + 's';
+            document.body.appendChild(p);
+        }
+    </script>
+
+    <div class="container">
+        <div class="logo">⬡ Data Space</div>
+        <h1>🔐 Operation Ironclad</h1>
+        <p class="subtitle">Five cases. Five codes. Crack them all to unlock the vault.</p>
+
+        <div class="cases-grid" id="casesGrid"></div>
+
+        <div class="btn-row">
+            <button class="btn" onclick="checkAll()">Verify All Codes</button>
+            <button class="btn reset" onclick="resetAll()">Reset</button>
+        </div>
+
+        <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <!-- Success Overlay -->
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-content">
+            <span class="success-emoji">🚀</span>
+            <div class="success-club">Data Space</div>
+            <div class="success-headline">The Vault Is Open!</div>
+            <div class="quote-box">
+                <div class="quote-text">
+                    "Alone we can do so little; together we can do so much. Every dataset tells a story — and it takes a whole team to read between the lines. Keep showing up, keep questioning, keep building. Your best work is always ahead of you."
+                </div>
+                <div class="quote-author">— To every Data Space member who pushed through 🌟</div>
+            </div>
+            <div class="success-sub">
+                You didn't just crack a code today.<br>
+                You proved what Data Space is made of — curiosity, grit, and each other.<br><br>
+                <strong>Now go build something great. 🛠️</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── Case definitions ──
+        // code: the correct answer string (digits only)
+        // digits: how many input boxes to show
+        const CASES = [
+            {
+                id: 1,
+                label: 'Case 01',
+                title: 'Operation Overdrive',
+                hint: 'The ghost vehicle\'s horsepower  •  mtcars',
+                code: '35',
+                digits: 2
+            },
+            {
+                id: 2,
+                label: 'Case 02',
+                title: 'The Anomaly Year',
+                hint: 'Last 2 digits of the peak construction year  •  house_data1000',
+                code: '05',
+                digits: 2
+            },
+            {
+                id: 3,
+                label: 'Case 03',
+                title: 'The Invisible Message',
+                hint: 'Two digits hidden in the scatter plot  •  house_data1000',
+                code: '67',
+                digits: 2
+            },
+            {
+                id: 4,
+                label: 'Case 04',
+                title: 'The Impossible Structure',
+                hint: 'Floors of the ghost asset  •  house_data1000',
+                code: '69',
+                digits: 2
+            },
+            {
+                id: 5,
+                label: 'Case 05',
+                title: 'The Ghost Asset',
+                hint: 'Last 2 digits of the ghost property\'s house number  •  house_data1000',
+                code: '32',
+                digits: 2
+            }
+        ];
+
+        // Track inputs per case
+        const caseInputs = {};
+        const caseSolved = {};
+
+        function buildCases() {
+            const grid = document.getElementById('casesGrid');
+
+            CASES.forEach(c => {
+                caseInputs[c.id] = [];
+                caseSolved[c.id] = false;
+
+                const card = document.createElement('div');
+                card.className = 'case-card';
+                card.id = `card-${c.id}`;
+
+                // Info side
+                const info = document.createElement('div');
+                info.className = 'case-info';
+                info.innerHTML = `
+                    <div class="case-label">${c.label}</div>
+                    <div class="case-title">${c.title}</div>
+                    <div class="case-hint">${c.hint}</div>
+                `;
+
+                // Input side
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'input-group';
+
+                for (let d = 0; d < c.digits; d++) {
+                    const inp = document.createElement('input');
+                    inp.type = 'text';
+                    inp.inputMode = 'numeric';
+                    inp.maxLength = 1;
+                    inp.className = 'digit-input';
+                    inp.dataset.caseId = c.id;
+                    inp.dataset.pos = d;
+
+                    inp.addEventListener('input', (e) => handleInput(e, c.id));
+                    inp.addEventListener('keydown', (e) => handleKeydown(e, c.id));
+
+                    inputGroup.appendChild(inp);
+                    caseInputs[c.id].push(inp);
+                }
+
+                // Status icon
+                const icon = document.createElement('div');
+                icon.className = 'check-icon';
+                icon.id = `icon-${c.id}`;
+                icon.textContent = '🔒';
+
+                card.appendChild(info);
+                card.appendChild(inputGroup);
+                card.appendChild(icon);
+                grid.appendChild(card);
+            });
+
+            // Focus first input of first case
+            caseInputs[1][0].focus();
+        }
+
+        function handleInput(e, caseId) {
+            const inp = e.target;
+            const val = inp.value.replace(/\D/g, '');
+            inp.value = val ? val[0] : '';
+
+            clearCardState(caseId);
+
+            if (inp.value) {
+                const pos = parseInt(inp.dataset.pos);
+                const arr = caseInputs[caseId];
+                if (pos < arr.length - 1) {
+                    arr[pos + 1].focus();
+                }
+            }
+
+            document.getElementById('statusMsg').textContent = '';
+        }
+
+        function handleKeydown(e, caseId) {
+            const inp = e.target;
+            const pos = parseInt(inp.dataset.pos);
+            const arr = caseInputs[caseId];
+
+            if (e.key === 'Backspace' && !inp.value && pos > 0) {
+                arr[pos - 1].focus();
+                arr[pos - 1].value = '';
+            }
+            if (e.key === 'ArrowLeft'  && pos > 0)              arr[pos - 1].focus();
+            if (e.key === 'ArrowRight' && pos < arr.length - 1) arr[pos + 1].focus();
+            if (e.key === 'Enter') checkAll();
+
+            // Navigate to next case on last digit
+            if (e.key !== 'Backspace' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+                if (pos === arr.length - 1 && inp.value) {
+                    const caseIdx = CASES.findIndex(c => c.id === caseId);
+                    if (caseIdx < CASES.length - 1) {
+                        const nextCase = CASES[caseIdx + 1];
+                        setTimeout(() => caseInputs[nextCase.id][0].focus(), 80);
+                    }
+                }
+            }
+        }
+
+        function clearCardState(caseId) {
+            const card = document.getElementById(`card-${caseId}`);
+            card.classList.remove('solved', 'error-state');
+            caseInputs[caseId].forEach(i => i.classList.remove('correct', 'wrong'));
+            document.getElementById(`icon-${caseId}`).textContent = '🔒';
+            caseSolved[caseId] = false;
+        }
+
+        function checkAll() {
+            let allSolved = true;
+            let firstWrong = null;
+
+            CASES.forEach(c => {
+                const entered = caseInputs[c.id].map(i => i.value).join('');
+                const card    = document.getElementById(`card-${c.id}`);
+                const icon    = document.getElementById(`icon-${c.id}`);
+
+                if (entered.length < c.digits) {
+                    // Incomplete
+                    card.classList.remove('solved');
+                    card.classList.add('error-state');
+                    caseInputs[c.id].forEach(i => { if (!i.value) i.classList.add('wrong'); });
+                    icon.textContent = '❌';
+                    caseSolved[c.id] = false;
+                    allSolved = false;
+                    if (!firstWrong) firstWrong = c.id;
+                    setTimeout(() => card.classList.remove('error-state'), 600);
+                } else if (entered === c.code) {
+                    // Correct
+                    card.classList.remove('error-state');
+                    card.classList.add('solved');
+                    caseInputs[c.id].forEach(i => { i.classList.remove('wrong'); i.classList.add('correct'); });
+                    icon.textContent = '✅';
+                    caseSolved[c.id] = true;
+                } else {
+                    // Wrong
+                    card.classList.remove('solved');
+                    card.classList.add('error-state');
+                    caseInputs[c.id].forEach(i => { i.classList.remove('correct'); i.classList.add('wrong'); });
+                    icon.textContent = '❌';
+                    caseSolved[c.id] = false;
+                    allSolved = false;
+                    if (!firstWrong) firstWrong = c.id;
+                    setTimeout(() => card.classList.remove('error-state'), 600);
+                }
+            });
+
+            const msg = document.getElementById('statusMsg');
+
+            if (allSolved) {
+                msg.textContent = '✓ ALL CASES CRACKED!';
+                msg.className = 'status-msg success';
+                setTimeout(showSuccess, 900);
+            } else {
+                const wrongCases = CASES.filter(c => !caseSolved[c.id]).map(c => c.label);
+                msg.textContent = `✗ Check: ${wrongCases.join(' · ')}`;
+                msg.className = 'status-msg error';
+            }
+        }
+
+        function resetAll() {
+            CASES.forEach(c => {
+                clearCardState(c.id);
+                caseInputs[c.id].forEach(i => { i.value = ''; i.classList.remove('correct','wrong'); });
+            });
+            document.getElementById('statusMsg').textContent = '';
+            caseInputs[1][0].focus();
+        }
+
+        function showSuccess() {
+            const overlay = document.getElementById('successOverlay');
+            overlay.style.display = 'flex';
+            launchConfetti();
+        }
+
+        function launchConfetti() {
+            const colors = ['#f44336','#4CAF50','#2196F3','#FFC107','#9C27B0','#FF9800','#00BCD4'];
+            for (let i = 0; i < 140; i++) {
+                setTimeout(() => {
+                    const el = document.createElement('div');
+                    el.className = 'confetti';
+                    el.style.left = Math.random() * 100 + 'vw';
+                    el.style.top  = '-12px';
+                    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    el.style.width  = (Math.random() * 8 + 6) + 'px';
+                    el.style.height = (Math.random() * 8 + 6) + 'px';
+                    el.style.animationDuration = (Math.random() * 2 + 2.5) + 's';
+                    document.body.appendChild(el);
+                    setTimeout(() => el.remove(), 4500);
+                }, i * 22);
+            }
+        }
+
+        buildCases();
+    </script>
+</body>
+</html>
